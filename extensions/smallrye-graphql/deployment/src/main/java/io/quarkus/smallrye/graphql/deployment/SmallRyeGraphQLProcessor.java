@@ -114,7 +114,6 @@ import io.smallrye.graphql.schema.helper.TypeAutoNameStrategy;
 import io.smallrye.graphql.schema.model.Argument;
 import io.smallrye.graphql.schema.model.DirectiveType;
 import io.smallrye.graphql.schema.model.Field;
-import io.smallrye.graphql.schema.model.Group;
 import io.smallrye.graphql.schema.model.InputType;
 import io.smallrye.graphql.schema.model.Operation;
 import io.smallrye.graphql.schema.model.Reference;
@@ -320,6 +319,9 @@ public class SmallRyeGraphQLProcessor {
             indexer.indexClass(RequiresScopes.class);
             indexer.indexClass(ScopeGroup.class);
             indexer.indexClass(ScopeItem.class);
+            // While I was testing this, it turned out that adding a namespace was not required.
+            // But perhaps for safety it will be necessary to add.
+            // indexer.indexClass(Namespace.class);
         } catch (IOException ex) {
             LOG.warn("Failure while creating index", ex);
         }
@@ -507,11 +509,12 @@ public class SmallRyeGraphQLProcessor {
     private String[] getSchemaJavaClasses(Schema schema) {
         // Unique list of classes we need to do reflection on
         Set<String> classes = new HashSet<>();
-
-        classes.addAll(getOperationClassNames(schema.getQueries()));
-        classes.addAll(getOperationClassNames(schema.getGroupedQueries()));
-        classes.addAll(getOperationClassNames(schema.getMutations()));
-        classes.addAll(getOperationClassNames(schema.getGroupedMutations()));
+        // While I was testing this, it turned out that in the native image it works
+        // without adding information about the operations (and probably is not necessary).
+        //
+        // But maybe it's worth leaving for safety's sake. This method gets a list of all operations.
+        // The main change is the removal of the group processing method.
+        // classes.addAll(getOperationClassNames(schema.getAllOperations()));
         classes.addAll(getTypeClassNames(schema.getTypes().values()));
         classes.addAll(getInputClassNames(schema.getInputs().values()));
         classes.addAll(getInterfaceClassNames(schema.getInterfaces().values()));
@@ -553,15 +556,6 @@ public class SmallRyeGraphQLProcessor {
                 classes.addAll(getAllReferenceClasses(argument.getReference()));
             }
             classes.addAll(getAllReferenceClasses(operation.getReference()));
-        }
-        return classes;
-    }
-
-    private Set<String> getOperationClassNames(Map<Group, Set<Operation>> groupedOperations) {
-        Set<String> classes = new HashSet<>();
-        Collection<Set<Operation>> operations = groupedOperations.values();
-        for (Set<Operation> operationSet : operations) {
-            classes.addAll(getOperationClassNames(operationSet));
         }
         return classes;
     }
