@@ -82,6 +82,7 @@ import io.smallrye.graphql.api.AdaptWith;
 import io.smallrye.graphql.api.Deprecated;
 import io.smallrye.graphql.api.Entry;
 import io.smallrye.graphql.api.ErrorExtensionProvider;
+import io.smallrye.graphql.api.Namespace;
 import io.smallrye.graphql.api.OneOf;
 import io.smallrye.graphql.api.federation.Authenticated;
 import io.smallrye.graphql.api.federation.ComposeDirective;
@@ -319,9 +320,7 @@ public class SmallRyeGraphQLProcessor {
             indexer.indexClass(RequiresScopes.class);
             indexer.indexClass(ScopeGroup.class);
             indexer.indexClass(ScopeItem.class);
-            // While I was testing this, it turned out that adding a namespace was not required.
-            // But perhaps for safety it will be necessary to add.
-            // indexer.indexClass(Namespace.class);
+            indexer.indexClass(Namespace.class);
         } catch (IOException ex) {
             LOG.warn("Failure while creating index", ex);
         }
@@ -509,12 +508,7 @@ public class SmallRyeGraphQLProcessor {
     private String[] getSchemaJavaClasses(Schema schema) {
         // Unique list of classes we need to do reflection on
         Set<String> classes = new HashSet<>();
-        // While I was testing this, it turned out that in the native image it works
-        // without adding information about the operations (and probably is not necessary).
-        //
-        // But maybe it's worth leaving for safety's sake. This method gets a list of all operations.
-        // The main change is the removal of the group processing method.
-        // classes.addAll(getOperationClassNames(schema.getAllOperations()));
+        classes.addAll(getOperationClassNames(schema.getAllOperations()));
         classes.addAll(getTypeClassNames(schema.getTypes().values()));
         classes.addAll(getInputClassNames(schema.getInputs().values()));
         classes.addAll(getInterfaceClassNames(schema.getInterfaces().values()));
